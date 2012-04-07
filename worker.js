@@ -1,16 +1,22 @@
 var dns = require('dns');
 var request = require('request');
+var uuid = require('node-uuid');
 
-WORK_URL = 'http://localhost:3000/getwork';
-POST_URL = 'http://localhost:3000/postresults';
+WORK_URL_BASE = 'http://localhost:3000/getwork';
+POST_URL_BASE = 'http://localhost:3000/postresults';
 
 var debuglog = function(s) {}
 var debuglog = console.log;
 
+var ID = uuid.v1();
+var workUrl = WORK_URL_BASE + '/' + ID;
+var postUrl = POST_URL_BASE + '/' + ID;
+
+
 function getWork() {
   debuglog('Getting more work');
   // Get range of IP addresses
-  request({uri: WORK_URL}, function(error, response, body) {
+  request.get({uri: workUrl}, function(error, response, body) {
     if (error != null && response.statusCode != 200) {
       console.log('Error grabbing a block.');
     } else {
@@ -47,7 +53,7 @@ function done(results) {
   //console.log(JSON.stringify(results));
 
   // Post the results back to the server
-  request.post({url: POST_URL, json: results}, function(error, body) {
+  request.post({url: postUrl, json: results}, function(error, body) {
     if (error != null) {
       console.log('Received an error posting the results back to the server: ' + error.message);
     } else {

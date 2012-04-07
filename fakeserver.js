@@ -8,18 +8,18 @@ var app = express.createServer();
 
 app.use(express.bodyParser());
 
-app.get('/getwork', function(req, res) {
+app.get('/getwork/:id', function(req, res) {
   addresses = [];
   for (d = 1; d <= 254; d++) {
     addresses.push('172.203.55.' + d);
   }
   data = {range: addresses};
-  console.log('Providing work to a worker');
+  console.log('Providing work to worker ' + req.params.id);
   res.send(data);
 });
 
-app.post('/postresults', function(req, res) {
-  console.log('Got results from worker:');
+app.post('/postresults/:id', function(req, res) {
+  console.log('Got results from worker ' + req.params.id + ':');
   //console.log(JSON.stringify(req.body));
   console.log(req.body.length);
   res.send();
