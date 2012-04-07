@@ -1,6 +1,5 @@
 /*
- * Fake master server. Provides a handful of IP addresses.  The fake server
- * does not interact with a database, so it's useful for testing the worker.
+ * Master server. Provides a handful of IP addresses.
  */
 
 var express = require('express');
@@ -21,18 +20,17 @@ app.get('/getwork/:id', function(request, response) {
 	}
 	data = {range: addresses, worker: request.params.id, status: 'pending'};
 	
-	console.log(data)
+	console.log(data);
 	  
 	collection.insert(  data, 
 						{ safe:true },
                     	function(err, objects) {
-							console.log(objects);
 							if (err){ 
 								console.warn(err.message);
 							    response.send();
 							}
 							else{
-							    console.log('Providing work to a worker');
+							    console.log('Providing work to worker ' + request.params.id);
 							    response.send(data);
 							}
   						});
@@ -41,11 +39,11 @@ app.get('/getwork/:id', function(request, response) {
 });
 
 app.post('/postresults/:id', function(request, response) {
-  console.log('Got ' +response.length +' results from worker:');
+  console.log('Got ' +response.body.length +' results from worker:');
 	
   db.collection('ipdb', function(err, collection) {
     collection.update(	{ worker: request.params.id }, 
-						response, 
+						response.body, 
 						{ safe:true, multi:true },
 						function(err) {
 							if (err){
@@ -61,8 +59,11 @@ app.post('/postresults/:id', function(request, response) {
 
 });
 
-app.listen(3000, function(){
-  console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+db.open(function() {
+  var port = process.env.PORT || 3000;
+  app.listen(port, function() {
+    console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+  });
 });
 
 
