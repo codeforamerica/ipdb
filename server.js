@@ -11,51 +11,74 @@ var db = new mongodb.Db('test', new mongodb.Server('127.0.0.1', 27017, {}), {});
 
 app.use(express.bodyParser());
 
+
+var arguments = process.argv.splice(2);
+
+
+
+
 app.get('/getwork/:id', function(request, response) {  
 
   db.collection('ipdb', function(err, collection) {	  
-	addresses = [];
-	for (d = 1; d <= 254; d++) {
-		addresses.push('172.203.55.' + d);
-	}
-	data = {range: addresses, worker: request.params.id, status: 'pending'};
-	
-	console.log(data);
-	  
-	collection.insert(  data, 
-						{ safe:true },
-                    	function(err, objects) {
-							if (err){ 
-								console.warn(err.message);
-							    response.send();
-							}
-							else{
-							    console.log('Providing work to worker ' + request.params.id);
-							    response.send(data);
-							}
-  						});
-  });
+  	addresses = [];
+    
+    /*
+    
+    TODO: we need an IP generator.
+    
+    */
+  	for (d = 1; d <= 5; d++) {
+  		addresses.push( {_id: '172.203.55.' + d, worker: request.params.id, status: 'pending'});
+  	}
   
+    collection.insert( addresses,
+                      { safe:true },
+                      function(err, objects) {
+                        if (err){
+                          console.warn(err.message);
+                          response.send();
+                        }
+                        else{
+                          console.log('Providing work to worker ' + request.params.id);
+                          response.send(addresses);
+                        }
+    });
+  });
 });
 
-app.post('/postresults/:id', function(request, response) {
-  console.log('Got ' +response.body.length +' results from worker:');
+app.post('/postresults/:id', function(request, res) {
+  response = res.req.body;
+  
+  console.log('Got ' +response.length +' results from worker:');
 	
-  db.collection('ipdb', function(err, collection) {
-    collection.update(	{ worker: request.params.id }, 
-						response.body, 
-						{ safe:true, multi:true },
-						function(err) {
-							if (err){
-								console.warn(err.message);
-							}
-							else {
-								console.log(request.body);
-								response.send();
-								console.log('successfully updated');
-							}
-						});
-	});
+  var status_sets = {complete : [], failed : []};
+
+  for (i =0; i < response.length; i++) {
+    status_sets[response[i].status].push(response[i]._id);
+  }  
+  
+  console.log('There are  '+Object.keys(status_sets).length + ' number of statuses');
+  for (var current_status in status_sets) {    
+     
+    db.collection('ipdb', function(err, collection) {
+      if(status_sets[current_status].length){
+        console.log('We are now updating addresses with status set to: ' + current_status);
+
+        collection.update(	{ worker: request.params.id, _id: current_status }, 
+                {"$set": {status: current_status}}, 
+    						{ safe:true, multi:true },
+    						function(err) {
+    							if (err){
+    								console.log("Error: " + err.message);
+    							}
+    							else {
+    								res.send();
+    								console.log('Successfully updated');
+    							}
+    						});
+      }
+    });
+  }
 
 });
 
@@ -65,5 +88,7 @@ db.open(function() {
     console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
   });
 });
+
+
 
 
