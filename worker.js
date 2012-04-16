@@ -27,7 +27,6 @@ var Worker = {};
 	    } 
       else {
 	      debuglog('Received more work');
-
         console.log('body'+body);
 	      var data = JSON.parse(body);
 	      Worker.process(data);
@@ -43,15 +42,15 @@ var Worker = {};
     console.log(addresses);
 	  // Iterate over addresses and do the reverse lookup.
 	  addresses.forEach(function(address) {
-	    debuglog('Kicking off a dns reverse lookup for: ' + address._id);
-	    dns.reverse(address._id, function(err, domains) {
+	    debuglog('Kicking off a dns reverse lookup for: ' + address.ip);
+	    dns.reverse(address.ip, function(err, domains) {
         if (err != null) {
-          console.log('DNS lookup for ' + address._id + ' failed: ' + err.message);
-          results.push({_id: address._id, status: 'failed', domains: domains});
+          console.log('DNS lookup for ' + address.ip + ' failed: ' + err.message);
+          results.push({ip: address.ip, status: 'failed', domains: domains});
         } 
         else {
-          debuglog('DNS results for: ' + address._id + ' = ' + domains[0]);
-          results.push({_id: address._id, status: 'complete', domains: domains});
+          debuglog('DNS results for: ' + address.ip + ' = ' + domains[0]);
+          results.push({ip: address.ip, status: 'complete', domains: domains});
         }
         
         if (++count == total) {
